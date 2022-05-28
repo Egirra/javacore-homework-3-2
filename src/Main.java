@@ -1,11 +1,9 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Main {
@@ -28,7 +26,10 @@ public class Main {
             saveGame(savePaths.get(i), users.get(i));
             zipFiles(path + "Save" + (i) + ".zip", savePaths.get(i), "save" + (i) + ".dat");
             deleteFiles(new File(savePaths.get(i)));
+            openZip(path + "Save" + (i) + ".zip", savePaths.get(i));
+            System.out.println(openProgress(savePaths.get(i)));
         }
+
     }
 
     public static void saveGame(String path, GameProgress user) {
@@ -60,5 +61,33 @@ public class Main {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    public static void openZip(String zipPath, String unpack) {
+        try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipPath))) {
+            ZipEntry entry;
+            while ((entry = zin.getNextEntry()) != null) {
+                FileOutputStream fout = new FileOutputStream(unpack);
+                for (int c = zin.read(); c != -1; c = zin.read()) {
+                    fout.write(c);
+                }
+                fout.flush();
+                zin.closeEntry();
+                fout.close();
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public static GameProgress openProgress(String path) {
+        GameProgress gameProgress = null;
+        try (FileInputStream fis = new FileInputStream(path);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+            gameProgress = (GameProgress) ois.readObject();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+        return gameProgress;
     }
 }
